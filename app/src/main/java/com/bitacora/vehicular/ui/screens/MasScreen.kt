@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -100,7 +102,10 @@ private fun DialogoApariencia(alCerrar: () -> Unit) {
         onDismissRequest = alCerrar,
         title = { Text("Color de fondo") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 400.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text("Elige el color de fondo de la aplicación.", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
                 PaletaFondos.forEach { (nombre, color) ->
