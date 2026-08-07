@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.bitacora.vehicular.data.OtroPago
 import com.bitacora.vehicular.ui.components.*
 import com.bitacora.vehicular.viewmodel.BitacoraViewModel

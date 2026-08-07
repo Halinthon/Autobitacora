@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.*
@@ -53,7 +54,7 @@ fun EnlacesScreen(viewModel: BitacoraViewModel) {
                                 Icon(Icons.Default.OpenInNew, contentDescription = "Abrir enlace")
                             }
                             IconButton(onClick = { viewModel.eliminarEnlace(e) }) {
-                                Icon(androidx.compose.material.icons.Icons.Default.Delete, contentDescription = "Eliminar")
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                             }
                         }
                     }

@@ -1,10 +1,12 @@
 package com.bitacora.vehicular.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -55,7 +57,7 @@ fun VehiculosScreen(viewModel: BitacoraViewModel) {
                                 Text("Matriculado en ${v.lugarMatricula}", style = MaterialTheme.typography.bodySmall)
                             }
                             IconButton(onClick = { viewModel.eliminarVehiculo(v) }) {
-                                Icon(androidx.compose.material.icons.Icons.Default.Delete, contentDescription = "Eliminar")
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                             }
                         }
                     }
@@ -91,5 +93,5 @@ fun VehiculosScreen(viewModel: BitacoraViewModel) {
 }
 
 private fun Modifier.clickableSeleccionar(onClick: () -> Unit): Modifier = this.then(
-    androidx.compose.foundation.clickable(onClick = onClick)
+    Modifier.clickable(onClick = onClick)
 )

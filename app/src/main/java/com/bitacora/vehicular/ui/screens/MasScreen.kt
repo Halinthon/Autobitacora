@@ -1,5 +1,6 @@
 package com.bitacora.vehicular.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +30,7 @@ fun MasScreen(alSeleccionar: (String) -> Unit) {
                 Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable(opcion.ruta, alSeleccionar)
+                    .irA(opcion.ruta, alSeleccionar)
             ) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(opcion.icono, contentDescription = null)
@@ -41,5 +42,5 @@ fun MasScreen(alSeleccionar: (String) -> Unit) {
     }
 }
 
-private fun Modifier.clickable(ruta: String, alSeleccionar: (String) -> Unit): Modifier =
-    this.then(androidx.compose.foundation.clickable { alSeleccionar(ruta) })
+private fun Modifier.irA(ruta: String, alSeleccionar: (String) -> Unit): Modifier =
+    this.then(Modifier.clickable { alSeleccionar(ruta) })
