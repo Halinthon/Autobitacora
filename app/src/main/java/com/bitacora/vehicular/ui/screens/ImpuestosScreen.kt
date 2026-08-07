@@ -63,7 +63,7 @@ fun ImpuestosScreen(viewModel: BitacoraViewModel) {
             alCancelar = { mostrarDialogo = false }
         ) {
             CampoFecha("Fecha de pago", fecha) { fecha = it }
-            CampoTexto("Valor", valor, { valor = it }, numerico = true)
+            CampoTexto("Valor", valor, numerico = true) { valor = it }
             CampoTexto("Nro. de recibo", recibo) { recibo = it }
             CampoSeleccion("Medio de pago", MedioPago.entries, medio, ::nombreMedioPago) { medio = it }
             CampoFoto(foto) { foto = it }

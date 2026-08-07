@@ -58,7 +58,7 @@ fun OtrosPagosScreen(viewModel: BitacoraViewModel) {
         ) {
             CampoTexto("Descripción", descripcion) { descripcion = it }
             CampoFecha("Fecha", fecha) { fecha = it }
-            CampoTexto("Valor", valor, { valor = it }, numerico = true)
+            CampoTexto("Valor", valor, numerico = true) { valor = it }
             CampoFoto(foto) { foto = it }
         }
     }

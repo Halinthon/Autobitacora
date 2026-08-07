@@ -81,7 +81,7 @@ fun DashboardScreen(viewModel: BitacoraViewModel) {
             },
             alCancelar = { mostrarDialogoKm = false }
         ) {
-            CampoTexto("Kilometraje", km, { km = it.filter { c -> c.isDigit() } }, numerico = true)
+            CampoTexto("Kilometraje", km, numerico = true) { km = it.filter { c -> c.isDigit() } }
         }
     }
 }

@@ -86,7 +86,7 @@ fun VehiculosScreen(viewModel: BitacoraViewModel) {
             CampoSeleccion("Tipo", TipoVehiculo.entries, tipo, { if (it == TipoVehiculo.MOTO) "Moto" else "Auto" }) { tipo = it }
             CampoTexto("Placa", placa) { placa = it }
             CampoTexto("Marca", marca) { marca = it }
-            CampoTexto("Modelo (año)", modeloAnio, { modeloAnio = it.filter { c -> c.isDigit() } }, numerico = true)
+            CampoTexto("Modelo (año)", modeloAnio, numerico = true) { modeloAnio = it.filter { c -> c.isDigit() } }
             CampoTexto("Lugar de matrícula (ciudad)", lugar) { lugar = it }
         }
     }

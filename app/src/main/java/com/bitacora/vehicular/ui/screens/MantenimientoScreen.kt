@@ -130,9 +130,9 @@ private fun DialogoCambioAceite(viewModel: BitacoraViewModel, vehiculoId: Long, 
         alCancelar = alCerrar
     ) {
         CampoFecha("Fecha", fecha) { fecha = it }
-        CampoTexto("Kilometraje", km, { km = it.filter { c -> c.isDigit() } }, numerico = true)
+        CampoTexto("Kilometraje", km, numerico = true) { km = it.filter { c -> c.isDigit() } }
         if (km.toIntOrNull() != null) Text("Próximo cambio sugerido: ${km.toInt() + KM_INTERVALO_ACEITE} km", style = MaterialTheme.typography.bodySmall)
-        CampoTexto("Costo", costo, { costo = it }, numerico = true)
+        CampoTexto("Costo", costo, numerico = true) { costo = it }
         CampoTexto("Lugar", lugar) { lugar = it }
         CampoFoto(foto) { foto = it }
     }
@@ -158,7 +158,7 @@ private fun DialogoReparacion(viewModel: BitacoraViewModel, vehiculoId: Long, al
     ) {
         CampoFecha("Fecha", fecha) { fecha = it }
         CampoTexto("Resumen de la reparación", resumen) { resumen = it }
-        CampoTexto("Costo", costo, { costo = it }, numerico = true)
+        CampoTexto("Costo", costo, numerico = true) { costo = it }
         CampoTexto("Lugar", lugar) { lugar = it }
         CampoFoto(foto) { foto = it }
     }
@@ -184,7 +184,7 @@ private fun DialogoAutoparte(viewModel: BitacoraViewModel, vehiculoId: Long, alC
     ) {
         CampoFecha("Fecha", fecha) { fecha = it }
         CampoTexto("Nombre de la parte", nombre) { nombre = it }
-        CampoTexto("Costo", costo, { costo = it }, numerico = true)
+        CampoTexto("Costo", costo, numerico = true) { costo = it }
         CampoTexto("Lugar", lugar) { lugar = it }
         CampoFoto(foto) { foto = it }
     }

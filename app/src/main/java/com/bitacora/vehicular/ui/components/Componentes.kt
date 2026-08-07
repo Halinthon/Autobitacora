@@ -49,7 +49,7 @@ fun CampoFecha(etiqueta: String, fecha: LocalDate, alCambiar: (LocalDate) -> Uni
 }
 
 @Composable
-fun CampoTexto(etiqueta: String, valor: String, alCambiar: (String) -> Unit, numerico: Boolean = false) {
+fun CampoTexto(etiqueta: String, valor: String, numerico: Boolean = false, alCambiar: (String) -> Unit) {
     OutlinedTextField(
         value = valor,
         onValueChange = alCambiar,

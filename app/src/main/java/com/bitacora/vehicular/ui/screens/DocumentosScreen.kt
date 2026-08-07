@@ -104,7 +104,7 @@ private fun DialogoTecnomecanica(viewModel: BitacoraViewModel, vehiculoId: Long,
     ) {
         CampoFecha("Fecha de expedición", fechaExp) { fechaExp = it }
         Text("Vence: ${fechaExp.plusYears(1)}", style = MaterialTheme.typography.bodySmall)
-        CampoTexto("Valor", valor, { valor = it }, numerico = true)
+        CampoTexto("Valor", valor, numerico = true) { valor = it }
         CampoTexto("Lugar", lugar) { lugar = it }
         CampoFoto(foto) { foto = it }
     }
@@ -134,7 +134,7 @@ private fun DialogoSoat(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar
     ) {
         CampoFecha("Fecha de expedición", fechaExp) { fechaExp = it }
         Text("Vence: ${fechaExp.plusYears(1)}", style = MaterialTheme.typography.bodySmall)
-        CampoTexto("Valor", valor, { valor = it }, numerico = true)
+        CampoTexto("Valor", valor, numerico = true) { valor = it }
         CampoTexto("Lugar", lugar) { lugar = it }
         CampoFoto(foto) { foto = it }
     }
