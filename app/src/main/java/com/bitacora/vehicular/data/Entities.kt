@@ -172,3 +172,39 @@ data class Abastecimiento(
     val valorGalon: Double,
     val lugar: String // Coordenadas GPS "lat, lon" capturadas automáticamente al guardar
 )
+
+@Entity(
+    tableName = "tarjetas_propiedad",
+    foreignKeys = [ForeignKey(entity = Vehiculo::class, parentColumns = ["id"], childColumns = ["vehiculoId"], onDelete = CASCADE)]
+)
+data class TarjetaPropiedad(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val vehiculoId: Long,
+    val numeroMotor: String,
+    val vin: String,
+    val chasis: String,
+    val propietario: String,
+    val cedula: String,
+    val servicio: String,
+    val fechaMatricula: LocalDate,
+    val fechaExpedicion: LocalDate,
+    val organismoTransito: String,
+    val fotoPath: String? = null
+)
+
+@Entity(
+    tableName = "licencias_conduccion",
+    foreignKeys = [ForeignKey(entity = Vehiculo::class, parentColumns = ["id"], childColumns = ["vehiculoId"], onDelete = CASCADE)]
+)
+data class LicenciaConduccion(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val vehiculoId: Long,
+    val numero: String,
+    val nombre: String,
+    val fechaExpedicion: LocalDate,
+    val fechaVencimiento: LocalDate,
+    val categoria: String,
+    val restricciones: String,
+    val organismoTransito: String,
+    val fotoPath: String? = null
+)

@@ -10,9 +10,10 @@ import androidx.room.TypeConverters
     entities = [
         Vehiculo::class, CambioAceite::class, Reparacion::class, CompraAutoparte::class,
         Incidente::class, Tecnomecanica::class, Soat::class, Impuesto::class,
-        OtroPago::class, Enlace::class, RegistroOdometro::class, Abastecimiento::class
+        OtroPago::class, Enlace::class, RegistroOdometro::class, Abastecimiento::class,
+        TarjetaPropiedad::class, LicenciaConduccion::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -29,6 +30,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun enlaceDao(): EnlaceDao
     abstract fun registroOdometroDao(): RegistroOdometroDao
     abstract fun abastecimientoDao(): AbastecimientoDao
+    abstract fun tarjetaPropiedadDao(): TarjetaPropiedadDao
+    abstract fun licenciaConduccionDao(): LicenciaConduccionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

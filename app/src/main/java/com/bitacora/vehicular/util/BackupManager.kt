@@ -22,7 +22,9 @@ data class BackupCompleto(
     val otrosPagos: List<OtroPago>,
     val enlaces: List<Enlace>,
     val registrosOdometro: List<RegistroOdometro>,
-    val abastecimientos: List<Abastecimiento> = emptyList()
+    val abastecimientos: List<Abastecimiento> = emptyList(),
+    val tarjetasPropiedad: List<TarjetaPropiedad> = emptyList(),
+    val licenciasConduccion: List<LicenciaConduccion> = emptyList()
 )
 
 class BackupManager(private val context: Context, private val repo: Repository) {
@@ -46,7 +48,9 @@ class BackupManager(private val context: Context, private val repo: Repository) 
             otrosPagos = repo.otroPagoDao.obtenerTodos(),
             enlaces = repo.enlaceDao.obtenerTodos(),
             registrosOdometro = repo.registroOdometroDao.obtenerTodos(),
-            abastecimientos = repo.abastecimientoDao.obtenerTodos()
+            abastecimientos = repo.abastecimientoDao.obtenerTodos(),
+            tarjetasPropiedad = repo.tarjetaPropiedadDao.obtenerTodas(),
+            licenciasConduccion = repo.licenciaConduccionDao.obtenerTodas()
         )
         val json = gson.toJson(backup)
         val carpeta = File(context.cacheDir, "exportaciones").apply { mkdirs() }
@@ -82,6 +86,8 @@ class BackupManager(private val context: Context, private val repo: Repository) 
         backup.enlaces.forEach { e -> mapaIds[e.vehiculoId]?.let { repo.enlaceDao.insertar(e.copy(id = 0, vehiculoId = it)) } }
         backup.registrosOdometro.forEach { r -> mapaIds[r.vehiculoId]?.let { repo.registroOdometroDao.insertar(r.copy(id = 0, vehiculoId = it)) } }
         backup.abastecimientos.forEach { a -> mapaIds[a.vehiculoId]?.let { repo.abastecimientoDao.insertar(a.copy(id = 0, vehiculoId = it)) } }
+        backup.tarjetasPropiedad.forEach { t -> mapaIds[t.vehiculoId]?.let { repo.tarjetaPropiedadDao.insertar(t.copy(id = 0, vehiculoId = it)) } }
+        backup.licenciasConduccion.forEach { l -> mapaIds[l.vehiculoId]?.let { repo.licenciaConduccionDao.insertar(l.copy(id = 0, vehiculoId = it)) } }
     }
 }
 

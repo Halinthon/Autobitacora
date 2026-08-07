@@ -31,6 +31,8 @@ private val itemsBarraInferior = listOf(
 
 /** Rutas secundarias, accedidas desde el menú "Más", que llevan su propia barra superior con botón atrás. */
 private val titulosSecundarios = mapOf(
+    "tarjeta_propiedad" to "Tarjeta de propiedad",
+    "licencia_conduccion" to "Licencia de conducción",
     "incidentes" to "Incidentes",
     "impuestos" to "Impuestos",
     "otros_pagos" to "Otros pagos",
@@ -79,6 +81,8 @@ fun BitacoraNavHost(viewModel: BitacoraViewModel) {
             composable("documentos") { DocumentosScreen(viewModel) }
             composable("mas") { MasScreen(alSeleccionar = { ruta -> navController.navigate(ruta) }) }
 
+            composable("tarjeta_propiedad") { ConBarraSuperior("tarjeta_propiedad", navController) { TarjetaPropiedadScreen(viewModel) } }
+            composable("licencia_conduccion") { ConBarraSuperior("licencia_conduccion", navController) { LicenciaConduccionScreen(viewModel) } }
             composable("incidentes") { ConBarraSuperior("incidentes", navController) { IncidentesScreen(viewModel) } }
             composable("impuestos") { ConBarraSuperior("impuestos", navController) { ImpuestosScreen(viewModel) } }
             composable("otros_pagos") { ConBarraSuperior("otros_pagos", navController) { OtrosPagosScreen(viewModel) } }

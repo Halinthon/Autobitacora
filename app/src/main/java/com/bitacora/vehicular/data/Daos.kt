@@ -173,3 +173,25 @@ interface AbastecimientoDao {
     @Query("SELECT * FROM abastecimientos")
     suspend fun obtenerTodos(): List<Abastecimiento>
 }
+
+@Dao
+interface TarjetaPropiedadDao {
+    @Insert suspend fun insertar(t: TarjetaPropiedad): Long
+    @Update suspend fun actualizar(t: TarjetaPropiedad)
+    @Delete suspend fun eliminar(t: TarjetaPropiedad)
+    @Query("SELECT * FROM tarjetas_propiedad WHERE vehiculoId = :vehiculoId ORDER BY id DESC")
+    fun obtenerPorVehiculo(vehiculoId: Long): Flow<List<TarjetaPropiedad>>
+    @Query("SELECT * FROM tarjetas_propiedad")
+    suspend fun obtenerTodas(): List<TarjetaPropiedad>
+}
+
+@Dao
+interface LicenciaConduccionDao {
+    @Insert suspend fun insertar(l: LicenciaConduccion): Long
+    @Update suspend fun actualizar(l: LicenciaConduccion)
+    @Delete suspend fun eliminar(l: LicenciaConduccion)
+    @Query("SELECT * FROM licencias_conduccion WHERE vehiculoId = :vehiculoId ORDER BY id DESC")
+    fun obtenerPorVehiculo(vehiculoId: Long): Flow<List<LicenciaConduccion>>
+    @Query("SELECT * FROM licencias_conduccion")
+    suspend fun obtenerTodas(): List<LicenciaConduccion>
+}

@@ -18,6 +18,8 @@ class Repository(context: Context) {
     val enlaceDao = db.enlaceDao()
     val registroOdometroDao = db.registroOdometroDao()
     val abastecimientoDao = db.abastecimientoDao()
+    val tarjetaPropiedadDao = db.tarjetaPropiedadDao()
+    val licenciaConduccionDao = db.licenciaConduccionDao()
 
     data class ResumenGastos(
         val aceite: Double,

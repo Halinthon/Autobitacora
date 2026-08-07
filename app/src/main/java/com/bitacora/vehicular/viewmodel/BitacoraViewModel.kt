@@ -62,6 +62,8 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     val enlaces = flowPorVehiculo { repo.enlaceDao.obtenerPorVehiculo(it) }
     val registrosOdometro = flowPorVehiculo { repo.registroOdometroDao.obtenerPorVehiculo(it) }
     val abastecimientos = flowPorVehiculo { repo.abastecimientoDao.obtenerPorVehiculo(it) }
+    val tarjetasPropiedad = flowPorVehiculo { repo.tarjetaPropiedadDao.obtenerPorVehiculo(it) }
+    val licenciasConduccion = flowPorVehiculo { repo.licenciaConduccionDao.obtenerPorVehiculo(it) }
 
     /** Último kilometraje registrado del vehículo seleccionado (null si no hay registros). */
     private val _ultimoKilometraje = MutableStateFlow<RegistroOdometro?>(null)
@@ -83,6 +85,8 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
         actualizarResumenYAlertas()
     }
     fun agregarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.insertar(a); actualizarResumenYAlertas() }
+    fun agregarTarjetaPropiedad(t: TarjetaPropiedad) = viewModelScope.launch { repo.tarjetaPropiedadDao.insertar(t) }
+    fun agregarLicenciaConduccion(l: LicenciaConduccion) = viewModelScope.launch { repo.licenciaConduccionDao.insertar(l) }
 
     // ---------- Ediciones ----------
     fun editarCambioAceite(c: CambioAceite) = viewModelScope.launch { repo.cambioAceiteDao.actualizar(c); actualizarResumenYAlertas() }
@@ -95,6 +99,8 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     fun editarOtroPago(o: OtroPago) = viewModelScope.launch { repo.otroPagoDao.actualizar(o); actualizarResumenYAlertas() }
     fun editarEnlace(e: Enlace) = viewModelScope.launch { repo.enlaceDao.actualizar(e) }
     fun editarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.actualizar(a); actualizarResumenYAlertas() }
+    fun editarTarjetaPropiedad(t: TarjetaPropiedad) = viewModelScope.launch { repo.tarjetaPropiedadDao.actualizar(t) }
+    fun editarLicenciaConduccion(l: LicenciaConduccion) = viewModelScope.launch { repo.licenciaConduccionDao.actualizar(l) }
 
     // ---------- Eliminaciones ----------
     fun eliminarCambioAceite(c: CambioAceite) = viewModelScope.launch { repo.cambioAceiteDao.eliminar(c); actualizarResumenYAlertas() }
@@ -107,6 +113,8 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     fun eliminarOtroPago(o: OtroPago) = viewModelScope.launch { repo.otroPagoDao.eliminar(o); actualizarResumenYAlertas() }
     fun eliminarEnlace(e: Enlace) = viewModelScope.launch { repo.enlaceDao.eliminar(e) }
     fun eliminarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.eliminar(a); actualizarResumenYAlertas() }
+    fun eliminarTarjetaPropiedad(t: TarjetaPropiedad) = viewModelScope.launch { repo.tarjetaPropiedadDao.eliminar(t) }
+    fun eliminarLicenciaConduccion(l: LicenciaConduccion) = viewModelScope.launch { repo.licenciaConduccionDao.eliminar(l) }
     fun eliminarRegistroOdometro(r: RegistroOdometro) = viewModelScope.launch {
         repo.registroOdometroDao.eliminar(r)
         actualizarUltimoKilometraje()
