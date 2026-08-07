@@ -268,19 +268,38 @@ fun DialogoFormulario(
     alCancelar: () -> Unit,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = alCancelar,
-        title = { Text(titulo) },
-        text = {
-            Column(
+    Dialog(onDismissRequest = alCancelar) {
+        BoxWithConstraints {
+            // Límite explícito de altura calculado sobre el alto real disponible,
+            // para garantizar que siempre quede espacio para el scroll interno
+            // y los botones, sin depender del comportamiento interno de AlertDialog.
+            val alturaMaxima = maxHeight * 0.85f
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 4.dp,
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .heightIn(max = 460.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                content = contenido
-            )
-        },
-        confirmButton = { TextButton(onClick = alConfirmar) { Text("Guardar") } },
-        dismissButton = { TextButton(onClick = alCancelar) { Text("Cancelar") } }
-    )
+                    .fillMaxWidth()
+                    .heightIn(max = alturaMaxima)
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text(titulo, style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        content = contenido
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = alCancelar) { Text("Cancelar") }
+                        Spacer(Modifier.width(4.dp))
+                        TextButton(onClick = alConfirmar) { Text("Guardar") }
+                    }
+                }
+            }
+        }
+    }
 }

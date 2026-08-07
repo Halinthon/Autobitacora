@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.bitacora.vehicular.ui.theme.PaletaFondos
 import com.bitacora.vehicular.util.TemaPreferencias
 
@@ -98,45 +100,60 @@ private fun DialogoApariencia(alCerrar: () -> Unit) {
     val context = LocalContext.current
     val colorActual = TemaPreferencias.colorFondo
 
-    AlertDialog(
-        onDismissRequest = alCerrar,
-        title = { Text("Color de fondo") },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 400.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+    Dialog(onDismissRequest = alCerrar) {
+        BoxWithConstraints {
+            val alturaMaxima = maxHeight * 0.85f
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 4.dp,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth().heightIn(max = alturaMaxima)
             ) {
-                Text("Elige el color de fondo de la aplicación.", style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(8.dp))
-                PaletaFondos.forEach { (nombre, color) ->
-                    val seleccionado = colorActual == color
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { TemaPreferencias.establecer(context, color) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                Column(Modifier.padding(20.dp)) {
+                    Text("Color de fondo", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Box(
-                            Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(color ?: MaterialTheme.colorScheme.surfaceVariant)
-                                .then(
-                                    if (seleccionado)
-                                        Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                    else Modifier
+                        Text("Elige el color de fondo de la aplicación.", style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp))
+                        PaletaFondos.forEach { (nombre, color) ->
+                            val seleccionado = colorActual == color
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { TemaPreferencias.establecer(context, color) }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(color ?: MaterialTheme.colorScheme.surfaceVariant)
+                                        .then(
+                                            if (seleccionado)
+                                                Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                            else Modifier
+                                        )
                                 )
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Text(nombre, fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
-                        if (seleccionado) Icon(Icons.Default.Check, contentDescription = "Seleccionado")
+                                Spacer(Modifier.width(12.dp))
+                                Text(nombre, fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
+                                if (seleccionado) Icon(Icons.Default.Check, contentDescription = "Seleccionado")
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = alCerrar) { Text("Cerrar") }
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = alCerrar) { Text("Cerrar") } }
-    )
+        }
+    }
 }
 
 private fun Modifier.irA(ruta: String, alSeleccionar: (String) -> Unit): Modifier =
