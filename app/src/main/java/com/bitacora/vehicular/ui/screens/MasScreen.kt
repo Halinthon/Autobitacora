@@ -18,6 +18,8 @@ val opcionesMas = listOf(
     OpcionMas("Incidentes", Icons.Default.ReportProblem, "incidentes"),
     OpcionMas("Impuestos", Icons.Default.Receipt, "impuestos"),
     OpcionMas("Otros pagos", Icons.Default.Payments, "otros_pagos"),
+    OpcionMas("Kilometraje", Icons.Default.Speed, "kilometraje"),
+    OpcionMas("Combustible", Icons.Default.LocalGasStation, "combustible"),
     OpcionMas("Enlaces de interés", Icons.Default.Link, "enlaces"),
     OpcionMas("Respaldo de datos", Icons.Default.Backup, "backup")
 )

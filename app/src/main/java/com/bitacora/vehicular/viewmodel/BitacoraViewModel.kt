@@ -14,6 +14,9 @@ import java.time.temporal.ChronoUnit
 
 data class Alerta(val titulo: String, val detalle: String, val esUrgente: Boolean)
 
+/** Rango de fechas opcional para filtrar el resumen de gastos del dashboard. */
+data class RangoFechas(val desde: LocalDate, val hasta: LocalDate)
+
 class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = Repository(app)
@@ -37,6 +40,8 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
         _vehiculoSeleccionadoId.value = id
     }
 
+    fun editarVehiculo(v: Vehiculo) = viewModelScope.launch { repo.vehiculoDao.actualizar(v) }
+
     fun eliminarVehiculo(v: Vehiculo) = viewModelScope.launch { repo.vehiculoDao.eliminar(v) }
 
     // ---------- Helper genérico: datos ligados al vehículo seleccionado ----------
@@ -56,6 +61,11 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     val otrosPagos = flowPorVehiculo { repo.otroPagoDao.obtenerPorVehiculo(it) }
     val enlaces = flowPorVehiculo { repo.enlaceDao.obtenerPorVehiculo(it) }
     val registrosOdometro = flowPorVehiculo { repo.registroOdometroDao.obtenerPorVehiculo(it) }
+    val abastecimientos = flowPorVehiculo { repo.abastecimientoDao.obtenerPorVehiculo(it) }
+
+    /** Último kilometraje registrado del vehículo seleccionado (null si no hay registros). */
+    private val _ultimoKilometraje = MutableStateFlow<RegistroOdometro?>(null)
+    val ultimoKilometraje: StateFlow<RegistroOdometro?> = _ultimoKilometraje
 
     // ---------- Altas ----------
     fun agregarCambioAceite(c: CambioAceite) = viewModelScope.launch { repo.cambioAceiteDao.insertar(c); actualizarResumenYAlertas() }
@@ -67,7 +77,24 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     fun agregarImpuesto(i: Impuesto) = viewModelScope.launch { repo.impuestoDao.insertar(i); actualizarResumenYAlertas() }
     fun agregarOtroPago(o: OtroPago) = viewModelScope.launch { repo.otroPagoDao.insertar(o); actualizarResumenYAlertas() }
     fun agregarEnlace(e: Enlace) = viewModelScope.launch { repo.enlaceDao.insertar(e) }
-    fun agregarRegistroOdometro(r: RegistroOdometro) = viewModelScope.launch { repo.registroOdometroDao.insertar(r); actualizarResumenYAlertas() }
+    fun agregarRegistroOdometro(r: RegistroOdometro) = viewModelScope.launch {
+        repo.registroOdometroDao.insertar(r)
+        actualizarUltimoKilometraje()
+        actualizarResumenYAlertas()
+    }
+    fun agregarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.insertar(a); actualizarResumenYAlertas() }
+
+    // ---------- Ediciones ----------
+    fun editarCambioAceite(c: CambioAceite) = viewModelScope.launch { repo.cambioAceiteDao.actualizar(c); actualizarResumenYAlertas() }
+    fun editarReparacion(r: Reparacion) = viewModelScope.launch { repo.reparacionDao.actualizar(r); actualizarResumenYAlertas() }
+    fun editarCompraAutoparte(c: CompraAutoparte) = viewModelScope.launch { repo.compraAutoparteDao.actualizar(c); actualizarResumenYAlertas() }
+    fun editarIncidente(i: Incidente) = viewModelScope.launch { repo.incidenteDao.actualizar(i) }
+    fun editarTecnomecanica(t: Tecnomecanica) = viewModelScope.launch { repo.tecnomecanicaDao.actualizar(t); actualizarResumenYAlertas() }
+    fun editarSoat(s: Soat) = viewModelScope.launch { repo.soatDao.actualizar(s); actualizarResumenYAlertas() }
+    fun editarImpuesto(i: Impuesto) = viewModelScope.launch { repo.impuestoDao.actualizar(i); actualizarResumenYAlertas() }
+    fun editarOtroPago(o: OtroPago) = viewModelScope.launch { repo.otroPagoDao.actualizar(o); actualizarResumenYAlertas() }
+    fun editarEnlace(e: Enlace) = viewModelScope.launch { repo.enlaceDao.actualizar(e) }
+    fun editarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.actualizar(a); actualizarResumenYAlertas() }
 
     // ---------- Eliminaciones ----------
     fun eliminarCambioAceite(c: CambioAceite) = viewModelScope.launch { repo.cambioAceiteDao.eliminar(c); actualizarResumenYAlertas() }
@@ -79,10 +106,29 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
     fun eliminarImpuesto(i: Impuesto) = viewModelScope.launch { repo.impuestoDao.eliminar(i); actualizarResumenYAlertas() }
     fun eliminarOtroPago(o: OtroPago) = viewModelScope.launch { repo.otroPagoDao.eliminar(o); actualizarResumenYAlertas() }
     fun eliminarEnlace(e: Enlace) = viewModelScope.launch { repo.enlaceDao.eliminar(e) }
+    fun eliminarAbastecimiento(a: Abastecimiento) = viewModelScope.launch { repo.abastecimientoDao.eliminar(a); actualizarResumenYAlertas() }
+    fun eliminarRegistroOdometro(r: RegistroOdometro) = viewModelScope.launch {
+        repo.registroOdometroDao.eliminar(r)
+        actualizarUltimoKilometraje()
+        actualizarResumenYAlertas()
+    }
 
-    // ---------- Resumen de gastos ----------
-    private val _resumenGastos = MutableStateFlow(Repository.ResumenGastos(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+    // ---------- Resumen de gastos (total o filtrado por rango de fechas) ----------
+    private val _resumenGastos = MutableStateFlow(Repository.ResumenGastos.VACIO)
     val resumenGastos: StateFlow<Repository.ResumenGastos> = _resumenGastos
+
+    private val _rangoFechas = MutableStateFlow<RangoFechas?>(null)
+    val rangoFechas: StateFlow<RangoFechas?> = _rangoFechas
+
+    fun aplicarRangoFechas(desde: LocalDate, hasta: LocalDate) {
+        _rangoFechas.value = RangoFechas(desde, hasta)
+        viewModelScope.launch { actualizarResumenYAlertas() }
+    }
+
+    fun limpiarRangoFechas() {
+        _rangoFechas.value = null
+        viewModelScope.launch { actualizarResumenYAlertas() }
+    }
 
     // ---------- Alertas del dashboard ----------
     private val _alertas = MutableStateFlow<List<Alerta>>(emptyList())
@@ -92,21 +138,32 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             idVehiculoFlow.collect { id ->
                 if (id != null) {
-                    _resumenGastos.value = repo.resumenGastos(id)
-                    calcularAlertas(id)
+                    actualizarResumenYAlertas()
+                    actualizarUltimoKilometraje()
                 } else {
-                    _resumenGastos.value = Repository.ResumenGastos(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+                    _resumenGastos.value = Repository.ResumenGastos.VACIO
                     _alertas.value = emptyList()
+                    _ultimoKilometraje.value = null
                 }
             }
         }
     }
 
-    /** Vuelve a calcular el resumen de gastos y las alertas del vehículo actualmente seleccionado. */
+    /** Vuelve a calcular el resumen de gastos (según el rango activo) y las alertas del vehículo actual. */
     private suspend fun actualizarResumenYAlertas() {
         val id = vehiculoSeleccionado.value?.id ?: return
-        _resumenGastos.value = repo.resumenGastos(id)
+        val rango = _rangoFechas.value
+        _resumenGastos.value = if (rango != null) {
+            repo.resumenGastosEnRango(id, rango.desde, rango.hasta)
+        } else {
+            repo.resumenGastos(id)
+        }
         calcularAlertas(id)
+    }
+
+    private suspend fun actualizarUltimoKilometraje() {
+        val id = vehiculoSeleccionado.value?.id ?: return
+        _ultimoKilometraje.value = repo.registroOdometroDao.obtenerUltimo(id)
     }
 
     private suspend fun calcularAlertas(vehiculoId: Long) {
@@ -130,10 +187,6 @@ class BitacoraViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         _alertas.value = lista
-    }
-
-    fun refrescarAlertas() = viewModelScope.launch {
-        vehiculoSeleccionado.value?.id?.let { calcularAlertas(it) }
     }
 
     // ---------- Backup ----------

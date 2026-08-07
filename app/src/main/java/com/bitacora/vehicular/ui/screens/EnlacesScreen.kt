@@ -1,5 +1,6 @@
 package com.bitacora.vehicular.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,13 +26,14 @@ fun EnlacesScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     val lista by viewModel.enlaces.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<Enlace?>(null) }
     val uriHandler = LocalUriHandler.current
 
     if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar enlace") }
+            FloatingActionButton(onClick = { editando = null; mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar enlace") }
         }
     ) { padding ->
         if (lista.isEmpty()) {
@@ -41,7 +43,12 @@ fun EnlacesScreen(viewModel: BitacoraViewModel) {
         } else {
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
                 items(lista, key = { it.id }) { e ->
-                    ElevatedCard(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    ElevatedCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable { editando = e; mostrarDialogo = true }
+                    ) {
                         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Link, contentDescription = null)
                             Spacer(Modifier.width(10.dp))
@@ -64,18 +71,20 @@ fun EnlacesScreen(viewModel: BitacoraViewModel) {
     }
 
     if (mostrarDialogo) {
-        var titulo by remember { mutableStateOf("") }
-        var url by remember { mutableStateOf("") }
-        var categoria by remember { mutableStateOf("") }
-        var nota by remember { mutableStateOf("") }
+        var titulo by remember { mutableStateOf(editando?.titulo ?: "") }
+        var url by remember { mutableStateOf(editando?.url ?: "") }
+        var categoria by remember { mutableStateOf(editando?.categoria ?: "") }
+        var nota by remember { mutableStateOf(editando?.nota ?: "") }
 
         DialogoFormulario(
-            titulo = "Nuevo enlace",
+            titulo = if (editando == null) "Nuevo enlace" else "Editar enlace",
             alConfirmar = {
                 if (titulo.isBlank() || url.isBlank()) return@DialogoFormulario
-                viewModel.agregarEnlace(
-                    Enlace(vehiculoId = vehiculo!!.id, titulo = titulo, url = url, nota = nota, fechaGuardado = LocalDate.now(), categoria = categoria.ifBlank { "General" })
-                )
+                if (editando == null) {
+                    viewModel.agregarEnlace(Enlace(vehiculoId = vehiculo!!.id, titulo = titulo, url = url, nota = nota, fechaGuardado = LocalDate.now(), categoria = categoria.ifBlank { "General" }))
+                } else {
+                    viewModel.editarEnlace(editando!!.copy(titulo = titulo, url = url, nota = nota, categoria = categoria.ifBlank { "General" }))
+                }
                 mostrarDialogo = false
             },
             alCancelar = { mostrarDialogo = false }

@@ -21,7 +21,8 @@ data class BackupCompleto(
     val impuestos: List<Impuesto>,
     val otrosPagos: List<OtroPago>,
     val enlaces: List<Enlace>,
-    val registrosOdometro: List<RegistroOdometro>
+    val registrosOdometro: List<RegistroOdometro>,
+    val abastecimientos: List<Abastecimiento> = emptyList()
 )
 
 class BackupManager(private val context: Context, private val repo: Repository) {
@@ -44,7 +45,8 @@ class BackupManager(private val context: Context, private val repo: Repository) 
             impuestos = repo.impuestoDao.obtenerTodos(),
             otrosPagos = repo.otroPagoDao.obtenerTodos(),
             enlaces = repo.enlaceDao.obtenerTodos(),
-            registrosOdometro = repo.registroOdometroDao.obtenerTodos()
+            registrosOdometro = repo.registroOdometroDao.obtenerTodos(),
+            abastecimientos = repo.abastecimientoDao.obtenerTodos()
         )
         val json = gson.toJson(backup)
         val carpeta = File(context.cacheDir, "exportaciones").apply { mkdirs() }
@@ -79,6 +81,7 @@ class BackupManager(private val context: Context, private val repo: Repository) 
         backup.otrosPagos.forEach { o -> mapaIds[o.vehiculoId]?.let { repo.otroPagoDao.insertar(o.copy(id = 0, vehiculoId = it)) } }
         backup.enlaces.forEach { e -> mapaIds[e.vehiculoId]?.let { repo.enlaceDao.insertar(e.copy(id = 0, vehiculoId = it)) } }
         backup.registrosOdometro.forEach { r -> mapaIds[r.vehiculoId]?.let { repo.registroOdometroDao.insertar(r.copy(id = 0, vehiculoId = it)) } }
+        backup.abastecimientos.forEach { a -> mapaIds[a.vehiculoId]?.let { repo.abastecimientoDao.insertar(a.copy(id = 0, vehiculoId = it)) } }
     }
 }
 

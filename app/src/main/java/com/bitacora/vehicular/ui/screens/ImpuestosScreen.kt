@@ -22,12 +22,13 @@ fun ImpuestosScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     val lista by viewModel.impuestos.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<Impuesto?>(null) }
 
     if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+            FloatingActionButton(onClick = { editando = null; mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
         }
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
@@ -37,6 +38,7 @@ fun ImpuestosScreen(viewModel: BitacoraViewModel) {
                     subtitulo = nombreMedioPago(i.medioPago),
                     detalle = "$${"%,.0f".format(i.valor)}",
                     fotoPath = i.fotoPath,
+                    alEditar = { editando = i; mostrarDialogo = true },
                     alEliminar = { viewModel.eliminarImpuesto(i) }
                 )
             }
@@ -44,20 +46,22 @@ fun ImpuestosScreen(viewModel: BitacoraViewModel) {
     }
 
     if (mostrarDialogo) {
-        var fecha by remember { mutableStateOf(LocalDate.now()) }
-        var valor by remember { mutableStateOf("") }
-        var recibo by remember { mutableStateOf("") }
-        var medio by remember { mutableStateOf(MedioPago.DIGITAL) }
-        var foto by remember { mutableStateOf<String?>(null) }
+        var fecha by remember { mutableStateOf(editando?.fechaPago ?: LocalDate.now()) }
+        var valor by remember { mutableStateOf(editando?.valor?.toString() ?: "") }
+        var recibo by remember { mutableStateOf(editando?.nroRecibo ?: "") }
+        var medio by remember { mutableStateOf(editando?.medioPago ?: MedioPago.DIGITAL) }
+        var foto by remember { mutableStateOf(editando?.fotoPath) }
 
         DialogoFormulario(
-            titulo = "Nuevo pago de impuesto",
+            titulo = if (editando == null) "Nuevo pago de impuesto" else "Editar pago de impuesto",
             alConfirmar = {
                 val valorNum = valor.toDoubleOrNull() ?: return@DialogoFormulario
                 if (recibo.isBlank()) return@DialogoFormulario
-                viewModel.agregarImpuesto(
-                    Impuesto(vehiculoId = vehiculo!!.id, fechaPago = fecha, valor = valorNum, nroRecibo = recibo, medioPago = medio, fotoPath = foto)
-                )
+                if (editando == null) {
+                    viewModel.agregarImpuesto(Impuesto(vehiculoId = vehiculo!!.id, fechaPago = fecha, valor = valorNum, nroRecibo = recibo, medioPago = medio, fotoPath = foto))
+                } else {
+                    viewModel.editarImpuesto(editando!!.copy(fechaPago = fecha, valor = valorNum, nroRecibo = recibo, medioPago = medio, fotoPath = foto))
+                }
                 mostrarDialogo = false
             },
             alCancelar = { mostrarDialogo = false }

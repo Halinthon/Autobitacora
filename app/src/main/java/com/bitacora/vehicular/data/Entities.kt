@@ -16,7 +16,8 @@ data class Vehiculo(
     val placa: String,
     val marca: String,
     val modeloAnio: Int,
-    val lugarMatricula: String
+    val lugarMatricula: String,
+    val fotoPath: String? = null
 )
 
 private const val CASCADE = ForeignKey.CASCADE
@@ -155,4 +156,19 @@ data class RegistroOdometro(
     val vehiculoId: Long,
     val fecha: LocalDate,
     val kilometraje: Int
+)
+
+@Entity(
+    tableName = "abastecimientos",
+    foreignKeys = [ForeignKey(entity = Vehiculo::class, parentColumns = ["id"], childColumns = ["vehiculoId"], onDelete = CASCADE)]
+)
+data class Abastecimiento(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val vehiculoId: Long,
+    val fecha: LocalDate,
+    val valor: Double,
+    val galones: Double,
+    val kilometraje: Int,
+    val valorGalon: Double,
+    val lugar: String // Coordenadas GPS "lat, lon" capturadas automáticamente al guardar
 )

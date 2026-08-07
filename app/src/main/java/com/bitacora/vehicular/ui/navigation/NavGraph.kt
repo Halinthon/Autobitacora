@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.bitacora.vehicular.ui.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -9,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -26,6 +29,17 @@ private val itemsBarraInferior = listOf(
     ItemBarra("mas", "Más", Icons.Default.MoreHoriz)
 )
 
+/** Rutas secundarias, accedidas desde el menú "Más", que llevan su propia barra superior con botón atrás. */
+private val titulosSecundarios = mapOf(
+    "incidentes" to "Incidentes",
+    "impuestos" to "Impuestos",
+    "otros_pagos" to "Otros pagos",
+    "kilometraje" to "Kilometraje",
+    "combustible" to "Combustible",
+    "enlaces" to "Enlaces de interés",
+    "backup" to "Respaldo de datos"
+)
+
 @Composable
 fun BitacoraNavHost(viewModel: BitacoraViewModel) {
     val navController = rememberNavController()
@@ -40,10 +54,11 @@ fun BitacoraNavHost(viewModel: BitacoraViewModel) {
                     NavigationBarItem(
                         selected = rutaActual?.hierarchy?.any { it.route == item.ruta } == true,
                         onClick = {
+                            // Sin saveState/restoreState: evita que "Más" quede en blanco al
+                            // regresar desde una subpantalla (Incidentes, Impuestos, etc.).
                             navController.navigate(item.ruta) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                popUpTo(navController.graph.findStartDestination().id)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(item.icono, contentDescription = item.etiqueta) },
@@ -63,11 +78,34 @@ fun BitacoraNavHost(viewModel: BitacoraViewModel) {
             composable("mantenimiento") { MantenimientoScreen(viewModel) }
             composable("documentos") { DocumentosScreen(viewModel) }
             composable("mas") { MasScreen(alSeleccionar = { ruta -> navController.navigate(ruta) }) }
-            composable("incidentes") { IncidentesScreen(viewModel) }
-            composable("impuestos") { ImpuestosScreen(viewModel) }
-            composable("otros_pagos") { OtrosPagosScreen(viewModel) }
-            composable("enlaces") { EnlacesScreen(viewModel) }
-            composable("backup") { BackupScreen(viewModel) }
+
+            composable("incidentes") { ConBarraSuperior("incidentes", navController) { IncidentesScreen(viewModel) } }
+            composable("impuestos") { ConBarraSuperior("impuestos", navController) { ImpuestosScreen(viewModel) } }
+            composable("otros_pagos") { ConBarraSuperior("otros_pagos", navController) { OtrosPagosScreen(viewModel) } }
+            composable("kilometraje") { ConBarraSuperior("kilometraje", navController) { KilometrajeScreen(viewModel) } }
+            composable("combustible") { ConBarraSuperior("combustible", navController) { CombustibleScreen(viewModel) } }
+            composable("enlaces") { ConBarraSuperior("enlaces", navController) { EnlacesScreen(viewModel) } }
+            composable("backup") { ConBarraSuperior("backup", navController) { BackupScreen(viewModel) } }
+        }
+    }
+}
+
+@Composable
+private fun ConBarraSuperior(ruta: String, navController: NavHostController, contenido: @Composable () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(titulosSecundarios[ruta] ?: "") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(padding)) {
+            contenido()
         }
     }
 }

@@ -10,9 +10,9 @@ import androidx.room.TypeConverters
     entities = [
         Vehiculo::class, CambioAceite::class, Reparacion::class, CompraAutoparte::class,
         Incidente::class, Tecnomecanica::class, Soat::class, Impuesto::class,
-        OtroPago::class, Enlace::class, RegistroOdometro::class
+        OtroPago::class, Enlace::class, RegistroOdometro::class, Abastecimiento::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -28,6 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun otroPagoDao(): OtroPagoDao
     abstract fun enlaceDao(): EnlaceDao
     abstract fun registroOdometroDao(): RegistroOdometroDao
+    abstract fun abastecimientoDao(): AbastecimientoDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -38,7 +39,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "bitacora_vehicular.db"
-                ).build().also { INSTANCE = it }
+                )
+                    // No hay usuarios en producción todavía: si la estructura cambia,
+                    // se recrea la base de datos en vez de escribir migraciones manuales.
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
     }
 }

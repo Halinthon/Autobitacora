@@ -23,15 +23,18 @@ fun MantenimientoScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     var tab by remember { mutableStateOf(0) }
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var aceiteEditando by remember { mutableStateOf<CambioAceite?>(null) }
+    var reparacionEditando by remember { mutableStateOf<Reparacion?>(null) }
+    var autoparteEditando by remember { mutableStateOf<CompraAutoparte?>(null) }
 
-    if (vehiculo == null) {
-        SinVehiculoAviso()
-        return
-    }
+    if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+            FloatingActionButton(onClick = {
+                aceiteEditando = null; reparacionEditando = null; autoparteEditando = null
+                mostrarDialogo = true
+            }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -41,24 +44,24 @@ fun MantenimientoScreen(viewModel: BitacoraViewModel) {
                 Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text("Autopartes") })
             }
             when (tab) {
-                0 -> ListaCambiosAceite(viewModel)
-                1 -> ListaReparaciones(viewModel)
-                2 -> ListaAutopartes(viewModel)
+                0 -> ListaCambiosAceite(viewModel) { aceiteEditando = it; mostrarDialogo = true }
+                1 -> ListaReparaciones(viewModel) { reparacionEditando = it; mostrarDialogo = true }
+                2 -> ListaAutopartes(viewModel) { autoparteEditando = it; mostrarDialogo = true }
             }
         }
     }
 
     if (mostrarDialogo) {
         when (tab) {
-            0 -> DialogoCambioAceite(viewModel, vehiculo!!.id) { mostrarDialogo = false }
-            1 -> DialogoReparacion(viewModel, vehiculo!!.id) { mostrarDialogo = false }
-            2 -> DialogoAutoparte(viewModel, vehiculo!!.id) { mostrarDialogo = false }
+            0 -> DialogoCambioAceite(viewModel, vehiculo!!.id, aceiteEditando) { mostrarDialogo = false }
+            1 -> DialogoReparacion(viewModel, vehiculo!!.id, reparacionEditando) { mostrarDialogo = false }
+            2 -> DialogoAutoparte(viewModel, vehiculo!!.id, autoparteEditando) { mostrarDialogo = false }
         }
     }
 }
 
 @Composable
-private fun ListaCambiosAceite(viewModel: BitacoraViewModel) {
+private fun ListaCambiosAceite(viewModel: BitacoraViewModel, alEditar: (CambioAceite) -> Unit) {
     val lista by viewModel.cambiosAceite.collectAsState()
     LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
         items(lista, key = { it.id }) { c ->
@@ -67,6 +70,7 @@ private fun ListaCambiosAceite(viewModel: BitacoraViewModel) {
                 subtitulo = "Próximo: ${c.proximoCambioKm} km · ${c.lugar}",
                 detalle = "$${"%,.0f".format(c.costo)}",
                 fotoPath = c.fotoPath,
+                alEditar = { alEditar(c) },
                 alEliminar = { viewModel.eliminarCambioAceite(c) }
             )
         }
@@ -74,7 +78,7 @@ private fun ListaCambiosAceite(viewModel: BitacoraViewModel) {
 }
 
 @Composable
-private fun ListaReparaciones(viewModel: BitacoraViewModel) {
+private fun ListaReparaciones(viewModel: BitacoraViewModel, alEditar: (Reparacion) -> Unit) {
     val lista by viewModel.reparaciones.collectAsState()
     LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
         items(lista, key = { it.id }) { r ->
@@ -83,6 +87,7 @@ private fun ListaReparaciones(viewModel: BitacoraViewModel) {
                 subtitulo = r.resumen,
                 detalle = "$${"%,.0f".format(r.costo)}",
                 fotoPath = r.fotoPath,
+                alEditar = { alEditar(r) },
                 alEliminar = { viewModel.eliminarReparacion(r) }
             )
         }
@@ -90,7 +95,7 @@ private fun ListaReparaciones(viewModel: BitacoraViewModel) {
 }
 
 @Composable
-private fun ListaAutopartes(viewModel: BitacoraViewModel) {
+private fun ListaAutopartes(viewModel: BitacoraViewModel, alEditar: (CompraAutoparte) -> Unit) {
     val lista by viewModel.compraAutopartes.collectAsState()
     LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
         items(lista, key = { it.id }) { c ->
@@ -99,6 +104,7 @@ private fun ListaAutopartes(viewModel: BitacoraViewModel) {
                 subtitulo = c.lugar,
                 detalle = "$${"%,.0f".format(c.costo)}",
                 fotoPath = c.fotoPath,
+                alEditar = { alEditar(c) },
                 alEliminar = { viewModel.eliminarCompraAutoparte(c) }
             )
         }
@@ -106,25 +112,26 @@ private fun ListaAutopartes(viewModel: BitacoraViewModel) {
 }
 
 @Composable
-private fun DialogoCambioAceite(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar: () -> Unit) {
-    var fecha by remember { mutableStateOf(LocalDate.now()) }
-    var km by remember { mutableStateOf("") }
-    var costo by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var foto by remember { mutableStateOf<String?>(null) }
+private fun DialogoCambioAceite(viewModel: BitacoraViewModel, vehiculoId: Long, editando: CambioAceite?, alCerrar: () -> Unit) {
+    var fecha by remember { mutableStateOf(editando?.fecha ?: LocalDate.now()) }
+    var km by remember { mutableStateOf(editando?.kilometraje?.toString() ?: "") }
+    var costo by remember { mutableStateOf(editando?.costo?.toString() ?: "") }
+    var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+    var foto by remember { mutableStateOf(editando?.fotoPath) }
 
     DialogoFormulario(
-        titulo = "Nuevo cambio de aceite",
+        titulo = if (editando == null) "Nuevo cambio de aceite" else "Editar cambio de aceite",
         alConfirmar = {
             val kmValor = km.toIntOrNull() ?: return@DialogoFormulario
             val costoValor = costo.toDoubleOrNull() ?: return@DialogoFormulario
             if (lugar.isBlank()) return@DialogoFormulario
-            viewModel.agregarCambioAceite(
-                CambioAceite(
-                    vehiculoId = vehiculoId, fecha = fecha, kilometraje = kmValor,
-                    proximoCambioKm = kmValor + KM_INTERVALO_ACEITE, costo = costoValor, lugar = lugar, fotoPath = foto
+            if (editando == null) {
+                viewModel.agregarCambioAceite(
+                    CambioAceite(vehiculoId = vehiculoId, fecha = fecha, kilometraje = kmValor, proximoCambioKm = kmValor + KM_INTERVALO_ACEITE, costo = costoValor, lugar = lugar, fotoPath = foto)
                 )
-            )
+            } else {
+                viewModel.editarCambioAceite(editando.copy(fecha = fecha, kilometraje = kmValor, proximoCambioKm = kmValor + KM_INTERVALO_ACEITE, costo = costoValor, lugar = lugar, fotoPath = foto))
+            }
             alCerrar()
         },
         alCancelar = alCerrar
@@ -139,19 +146,23 @@ private fun DialogoCambioAceite(viewModel: BitacoraViewModel, vehiculoId: Long, 
 }
 
 @Composable
-private fun DialogoReparacion(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar: () -> Unit) {
-    var fecha by remember { mutableStateOf(LocalDate.now()) }
-    var resumen by remember { mutableStateOf("") }
-    var costo by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var foto by remember { mutableStateOf<String?>(null) }
+private fun DialogoReparacion(viewModel: BitacoraViewModel, vehiculoId: Long, editando: Reparacion?, alCerrar: () -> Unit) {
+    var fecha by remember { mutableStateOf(editando?.fecha ?: LocalDate.now()) }
+    var resumen by remember { mutableStateOf(editando?.resumen ?: "") }
+    var costo by remember { mutableStateOf(editando?.costo?.toString() ?: "") }
+    var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+    var foto by remember { mutableStateOf(editando?.fotoPath) }
 
     DialogoFormulario(
-        titulo = "Nueva reparación",
+        titulo = if (editando == null) "Nueva reparación" else "Editar reparación",
         alConfirmar = {
             val costoValor = costo.toDoubleOrNull() ?: return@DialogoFormulario
             if (resumen.isBlank() || lugar.isBlank()) return@DialogoFormulario
-            viewModel.agregarReparacion(Reparacion(vehiculoId = vehiculoId, fecha = fecha, resumen = resumen, costo = costoValor, lugar = lugar, fotoPath = foto))
+            if (editando == null) {
+                viewModel.agregarReparacion(Reparacion(vehiculoId = vehiculoId, fecha = fecha, resumen = resumen, costo = costoValor, lugar = lugar, fotoPath = foto))
+            } else {
+                viewModel.editarReparacion(editando.copy(fecha = fecha, resumen = resumen, costo = costoValor, lugar = lugar, fotoPath = foto))
+            }
             alCerrar()
         },
         alCancelar = alCerrar
@@ -165,19 +176,23 @@ private fun DialogoReparacion(viewModel: BitacoraViewModel, vehiculoId: Long, al
 }
 
 @Composable
-private fun DialogoAutoparte(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar: () -> Unit) {
-    var fecha by remember { mutableStateOf(LocalDate.now()) }
-    var nombre by remember { mutableStateOf("") }
-    var costo by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var foto by remember { mutableStateOf<String?>(null) }
+private fun DialogoAutoparte(viewModel: BitacoraViewModel, vehiculoId: Long, editando: CompraAutoparte?, alCerrar: () -> Unit) {
+    var fecha by remember { mutableStateOf(editando?.fecha ?: LocalDate.now()) }
+    var nombre by remember { mutableStateOf(editando?.nombreParte ?: "") }
+    var costo by remember { mutableStateOf(editando?.costo?.toString() ?: "") }
+    var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+    var foto by remember { mutableStateOf(editando?.fotoPath) }
 
     DialogoFormulario(
-        titulo = "Nueva compra de autoparte",
+        titulo = if (editando == null) "Nueva compra de autoparte" else "Editar compra de autoparte",
         alConfirmar = {
             val costoValor = costo.toDoubleOrNull() ?: return@DialogoFormulario
             if (nombre.isBlank() || lugar.isBlank()) return@DialogoFormulario
-            viewModel.agregarCompraAutoparte(CompraAutoparte(vehiculoId = vehiculoId, fecha = fecha, nombreParte = nombre, costo = costoValor, lugar = lugar, fotoPath = foto))
+            if (editando == null) {
+                viewModel.agregarCompraAutoparte(CompraAutoparte(vehiculoId = vehiculoId, fecha = fecha, nombreParte = nombre, costo = costoValor, lugar = lugar, fotoPath = foto))
+            } else {
+                viewModel.editarCompraAutoparte(editando.copy(fecha = fecha, nombreParte = nombre, costo = costoValor, lugar = lugar, fotoPath = foto))
+            }
             alCerrar()
         },
         alCancelar = alCerrar

@@ -20,12 +20,14 @@ fun DocumentosScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     var tab by remember { mutableStateOf(0) }
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var tecnoEditando by remember { mutableStateOf<Tecnomecanica?>(null) }
+    var soatEditando by remember { mutableStateOf<Soat?>(null) }
 
     if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+            FloatingActionButton(onClick = { tecnoEditando = null; soatEditando = null; mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -34,22 +36,22 @@ fun DocumentosScreen(viewModel: BitacoraViewModel) {
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("SOAT") })
             }
             when (tab) {
-                0 -> ListaTecnomecanica(viewModel)
-                1 -> ListaSoat(viewModel)
+                0 -> ListaTecnomecanica(viewModel) { tecnoEditando = it; mostrarDialogo = true }
+                1 -> ListaSoat(viewModel) { soatEditando = it; mostrarDialogo = true }
             }
         }
     }
 
     if (mostrarDialogo) {
         when (tab) {
-            0 -> DialogoTecnomecanica(viewModel, vehiculo!!.id) { mostrarDialogo = false }
-            1 -> DialogoSoat(viewModel, vehiculo!!.id) { mostrarDialogo = false }
+            0 -> DialogoTecnomecanica(viewModel, vehiculo!!.id, tecnoEditando) { mostrarDialogo = false }
+            1 -> DialogoSoat(viewModel, vehiculo!!.id, soatEditando) { mostrarDialogo = false }
         }
     }
 }
 
 @Composable
-private fun ListaTecnomecanica(viewModel: BitacoraViewModel) {
+private fun ListaTecnomecanica(viewModel: BitacoraViewModel, alEditar: (Tecnomecanica) -> Unit) {
     val lista by viewModel.tecnomecanicas.collectAsState()
     LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
         items(lista, key = { it.id }) { t ->
@@ -58,6 +60,7 @@ private fun ListaTecnomecanica(viewModel: BitacoraViewModel) {
                 subtitulo = "Expedida: ${t.fechaExpedicion} · ${t.lugar}",
                 detalle = "$${"%,.0f".format(t.valor)}",
                 fotoPath = t.fotoPath,
+                alEditar = { alEditar(t) },
                 alEliminar = { viewModel.eliminarTecnomecanica(t) }
             )
         }
@@ -65,7 +68,7 @@ private fun ListaTecnomecanica(viewModel: BitacoraViewModel) {
 }
 
 @Composable
-private fun ListaSoat(viewModel: BitacoraViewModel) {
+private fun ListaSoat(viewModel: BitacoraViewModel, alEditar: (Soat) -> Unit) {
     val lista by viewModel.soats.collectAsState()
     LazyColumn(Modifier.fillMaxSize().padding(12.dp)) {
         items(lista, key = { it.id }) { s ->
@@ -74,6 +77,7 @@ private fun ListaSoat(viewModel: BitacoraViewModel) {
                 subtitulo = "Expedido: ${s.fechaExpedicion} · ${s.lugar}",
                 detalle = "$${"%,.0f".format(s.valor)}",
                 fotoPath = s.fotoPath,
+                alEditar = { alEditar(s) },
                 alEliminar = { viewModel.eliminarSoat(s) }
             )
         }
@@ -81,23 +85,24 @@ private fun ListaSoat(viewModel: BitacoraViewModel) {
 }
 
 @Composable
-private fun DialogoTecnomecanica(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar: () -> Unit) {
-    var fechaExp by remember { mutableStateOf(LocalDate.now()) }
-    var valor by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var foto by remember { mutableStateOf<String?>(null) }
+private fun DialogoTecnomecanica(viewModel: BitacoraViewModel, vehiculoId: Long, editando: Tecnomecanica?, alCerrar: () -> Unit) {
+    var fechaExp by remember { mutableStateOf(editando?.fechaExpedicion ?: LocalDate.now()) }
+    var valor by remember { mutableStateOf(editando?.valor?.toString() ?: "") }
+    var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+    var foto by remember { mutableStateOf(editando?.fotoPath) }
 
     DialogoFormulario(
-        titulo = "Nueva tecnomecánica",
+        titulo = if (editando == null) "Nueva tecnomecánica" else "Editar tecnomecánica",
         alConfirmar = {
             val valorNum = valor.toDoubleOrNull() ?: return@DialogoFormulario
             if (lugar.isBlank()) return@DialogoFormulario
-            viewModel.agregarTecnomecanica(
-                Tecnomecanica(
-                    vehiculoId = vehiculoId, fechaExpedicion = fechaExp,
-                    fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto
+            if (editando == null) {
+                viewModel.agregarTecnomecanica(
+                    Tecnomecanica(vehiculoId = vehiculoId, fechaExpedicion = fechaExp, fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto)
                 )
-            )
+            } else {
+                viewModel.editarTecnomecanica(editando.copy(fechaExpedicion = fechaExp, fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto))
+            }
             alCerrar()
         },
         alCancelar = alCerrar
@@ -111,23 +116,24 @@ private fun DialogoTecnomecanica(viewModel: BitacoraViewModel, vehiculoId: Long,
 }
 
 @Composable
-private fun DialogoSoat(viewModel: BitacoraViewModel, vehiculoId: Long, alCerrar: () -> Unit) {
-    var fechaExp by remember { mutableStateOf(LocalDate.now()) }
-    var valor by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var foto by remember { mutableStateOf<String?>(null) }
+private fun DialogoSoat(viewModel: BitacoraViewModel, vehiculoId: Long, editando: Soat?, alCerrar: () -> Unit) {
+    var fechaExp by remember { mutableStateOf(editando?.fechaExpedicion ?: LocalDate.now()) }
+    var valor by remember { mutableStateOf(editando?.valor?.toString() ?: "") }
+    var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+    var foto by remember { mutableStateOf(editando?.fotoPath) }
 
     DialogoFormulario(
-        titulo = "Nuevo SOAT",
+        titulo = if (editando == null) "Nuevo SOAT" else "Editar SOAT",
         alConfirmar = {
             val valorNum = valor.toDoubleOrNull() ?: return@DialogoFormulario
             if (lugar.isBlank()) return@DialogoFormulario
-            viewModel.agregarSoat(
-                Soat(
-                    vehiculoId = vehiculoId, fechaExpedicion = fechaExp,
-                    fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto
+            if (editando == null) {
+                viewModel.agregarSoat(
+                    Soat(vehiculoId = vehiculoId, fechaExpedicion = fechaExp, fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto)
                 )
-            )
+            } else {
+                viewModel.editarSoat(editando.copy(fechaExpedicion = fechaExp, fechaVencimiento = fechaExp.plusYears(1), valor = valorNum, lugar = lugar, fotoPath = foto))
+            }
             alCerrar()
         },
         alCancelar = alCerrar

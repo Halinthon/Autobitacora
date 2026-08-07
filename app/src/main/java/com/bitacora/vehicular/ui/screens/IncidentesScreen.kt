@@ -27,12 +27,13 @@ fun IncidentesScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     val lista by viewModel.incidentes.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<Incidente?>(null) }
 
     if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+            FloatingActionButton(onClick = { editando = null; mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
         }
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
@@ -41,6 +42,7 @@ fun IncidentesScreen(viewModel: BitacoraViewModel) {
                     titulo = "${i.fecha} · ${nombreTipoIncidente(i.tipo)}",
                     subtitulo = i.lugar,
                     fotoPath = i.fotoPath,
+                    alEditar = { editando = i; mostrarDialogo = true },
                     alEliminar = { viewModel.eliminarIncidente(i) }
                 )
             }
@@ -48,16 +50,20 @@ fun IncidentesScreen(viewModel: BitacoraViewModel) {
     }
 
     if (mostrarDialogo) {
-        var fecha by remember { mutableStateOf(LocalDate.now()) }
-        var tipo by remember { mutableStateOf(TipoIncidente.MECANICA) }
-        var lugar by remember { mutableStateOf("") }
-        var foto by remember { mutableStateOf<String?>(null) }
+        var fecha by remember { mutableStateOf(editando?.fecha ?: LocalDate.now()) }
+        var tipo by remember { mutableStateOf(editando?.tipo ?: TipoIncidente.MECANICA) }
+        var lugar by remember { mutableStateOf(editando?.lugar ?: "") }
+        var foto by remember { mutableStateOf(editando?.fotoPath) }
 
         DialogoFormulario(
-            titulo = "Nuevo incidente",
+            titulo = if (editando == null) "Nuevo incidente" else "Editar incidente",
             alConfirmar = {
                 if (lugar.isBlank()) return@DialogoFormulario
-                viewModel.agregarIncidente(Incidente(vehiculoId = vehiculo!!.id, fecha = fecha, tipo = tipo, lugar = lugar, fotoPath = foto))
+                if (editando == null) {
+                    viewModel.agregarIncidente(Incidente(vehiculoId = vehiculo!!.id, fecha = fecha, tipo = tipo, lugar = lugar, fotoPath = foto))
+                } else {
+                    viewModel.editarIncidente(editando!!.copy(fecha = fecha, tipo = tipo, lugar = lugar, fotoPath = foto))
+                }
                 mostrarDialogo = false
             },
             alCancelar = { mostrarDialogo = false }

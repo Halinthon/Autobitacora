@@ -1,6 +1,7 @@
 package com.bitacora.vehicular.data
 
 import android.content.Context
+import java.time.LocalDate
 
 class Repository(context: Context) {
     private val db = AppDatabase.obtener(context)
@@ -16,17 +17,7 @@ class Repository(context: Context) {
     val otroPagoDao = db.otroPagoDao()
     val enlaceDao = db.enlaceDao()
     val registroOdometroDao = db.registroOdometroDao()
-
-    /** Total gastado en un vehículo, sumando todas las categorías. */
-    suspend fun totalGastado(vehiculoId: Long): Double {
-        return cambioAceiteDao.sumaCostos(vehiculoId) +
-            reparacionDao.sumaCostos(vehiculoId) +
-            compraAutoparteDao.sumaCostos(vehiculoId) +
-            tecnomecanicaDao.sumaCostos(vehiculoId) +
-            soatDao.sumaCostos(vehiculoId) +
-            impuestoDao.sumaCostos(vehiculoId) +
-            otroPagoDao.sumaCostos(vehiculoId)
-    }
+    val abastecimientoDao = db.abastecimientoDao()
 
     data class ResumenGastos(
         val aceite: Double,
@@ -34,17 +25,39 @@ class Repository(context: Context) {
         val autopartes: Double,
         val documentos: Double,
         val impuestos: Double,
+        val combustible: Double,
         val otros: Double
     ) {
-        val total: Double get() = aceite + reparaciones + autopartes + documentos + impuestos + otros
+        val total: Double get() = aceite + reparaciones + autopartes + documentos + impuestos + combustible + otros
+
+        companion object {
+            val VACIO = ResumenGastos(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        }
     }
 
+    /** Resumen de gastos total (sin filtro de fechas) de un vehículo. */
     suspend fun resumenGastos(vehiculoId: Long): ResumenGastos = ResumenGastos(
         aceite = cambioAceiteDao.sumaCostos(vehiculoId),
         reparaciones = reparacionDao.sumaCostos(vehiculoId),
         autopartes = compraAutoparteDao.sumaCostos(vehiculoId),
         documentos = tecnomecanicaDao.sumaCostos(vehiculoId) + soatDao.sumaCostos(vehiculoId),
         impuestos = impuestoDao.sumaCostos(vehiculoId),
+        combustible = abastecimientoDao.sumaCostos(vehiculoId),
         otros = otroPagoDao.sumaCostos(vehiculoId)
     )
+
+    /** Resumen de gastos filtrado por rango de fechas (inclusive) de un vehículo. */
+    suspend fun resumenGastosEnRango(vehiculoId: Long, desde: LocalDate, hasta: LocalDate): ResumenGastos {
+        val d = desde.toString()
+        val h = hasta.toString()
+        return ResumenGastos(
+            aceite = cambioAceiteDao.sumaCostosEnRango(vehiculoId, d, h),
+            reparaciones = reparacionDao.sumaCostosEnRango(vehiculoId, d, h),
+            autopartes = compraAutoparteDao.sumaCostosEnRango(vehiculoId, d, h),
+            documentos = tecnomecanicaDao.sumaCostosEnRango(vehiculoId, d, h) + soatDao.sumaCostosEnRango(vehiculoId, d, h),
+            impuestos = impuestoDao.sumaCostosEnRango(vehiculoId, d, h),
+            combustible = abastecimientoDao.sumaCostosEnRango(vehiculoId, d, h),
+            otros = otroPagoDao.sumaCostosEnRango(vehiculoId, d, h)
+        )
+    }
 }

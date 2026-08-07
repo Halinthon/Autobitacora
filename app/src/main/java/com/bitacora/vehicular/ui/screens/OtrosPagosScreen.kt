@@ -19,12 +19,13 @@ fun OtrosPagosScreen(viewModel: BitacoraViewModel) {
     val vehiculo by viewModel.vehiculoSeleccionado.collectAsState()
     val lista by viewModel.otrosPagos.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<OtroPago?>(null) }
 
     if (vehiculo == null) { SinVehiculoAviso(); return }
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+            FloatingActionButton(onClick = { editando = null; mostrarDialogo = true }) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
         }
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
@@ -34,6 +35,7 @@ fun OtrosPagosScreen(viewModel: BitacoraViewModel) {
                     subtitulo = "",
                     detalle = "$${"%,.0f".format(o.valor)}",
                     fotoPath = o.fotoPath,
+                    alEditar = { editando = o; mostrarDialogo = true },
                     alEliminar = { viewModel.eliminarOtroPago(o) }
                 )
             }
@@ -41,17 +43,21 @@ fun OtrosPagosScreen(viewModel: BitacoraViewModel) {
     }
 
     if (mostrarDialogo) {
-        var fecha by remember { mutableStateOf(LocalDate.now()) }
-        var descripcion by remember { mutableStateOf("") }
-        var valor by remember { mutableStateOf("") }
-        var foto by remember { mutableStateOf<String?>(null) }
+        var fecha by remember { mutableStateOf(editando?.fecha ?: LocalDate.now()) }
+        var descripcion by remember { mutableStateOf(editando?.descripcion ?: "") }
+        var valor by remember { mutableStateOf(editando?.valor?.toString() ?: "") }
+        var foto by remember { mutableStateOf(editando?.fotoPath) }
 
         DialogoFormulario(
-            titulo = "Nuevo pago",
+            titulo = if (editando == null) "Nuevo pago" else "Editar pago",
             alConfirmar = {
                 val valorNum = valor.toDoubleOrNull() ?: return@DialogoFormulario
                 if (descripcion.isBlank()) return@DialogoFormulario
-                viewModel.agregarOtroPago(OtroPago(vehiculoId = vehiculo!!.id, descripcion = descripcion, fecha = fecha, valor = valorNum, fotoPath = foto))
+                if (editando == null) {
+                    viewModel.agregarOtroPago(OtroPago(vehiculoId = vehiculo!!.id, descripcion = descripcion, fecha = fecha, valor = valorNum, fotoPath = foto))
+                } else {
+                    viewModel.editarOtroPago(editando!!.copy(descripcion = descripcion, fecha = fecha, valor = valorNum, fotoPath = foto))
+                }
                 mostrarDialogo = false
             },
             alCancelar = { mostrarDialogo = false }
